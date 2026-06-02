@@ -8,6 +8,10 @@ import session from 'express-session'
 import passport from 'passport'
 import './config/passport.js'
 import authRoutes from './routes/auth.routes.js'
+import workspaceRoutes from './routes/workspace.routes.js'
+import projectRoutes from './routes/project.routes.js'
+import columnRoutes from './routes/column.routes.js'
+import taskRoutes from './routes/task.routes.js'
 
 const app = express()
 
@@ -24,5 +28,9 @@ app.use(passport.session())
 // routes after
 app.use('/api/auth', authRoutes)
 app.get('/api/health', (req, res) => res.json({ status: 'ok', project: 'Shipyard 🚢' }))
+app.use('/api/workspaces', workspaceRoutes);
+app.use('/api/workspaces', projectRoutes);
+app.use('/api/projects', columnRoutes)
+app.use('/api/columns', taskRoutes)
 
 export default app

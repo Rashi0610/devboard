@@ -1,0 +1,12 @@
+everything up and running11:57 AMClaude responded: Let's go.Let's go. Back to where we left off.
+server/src/models/Column.model.js
+Fields:
+
+name — string, required
+project — ObjectId, ref 'Project', required
+position — number, required (ordering columns left to right)
+color — string, default '#6366f1'
+wipLimit — number, default 0 (0 means no limit)
+timestamps: true
+
+Write it and paste here.
