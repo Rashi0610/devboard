@@ -1,0 +1,151 @@
+import { useState } from 'react'
+import { updateTask } from '../../api/board.api'
+
+const priorityOptions = ['low', 'medium', 'high', 'urgent']
+
+const priorityStyles = {
+  urgent: 'bg-red-100 text-red-700',
+  high: 'bg-orange-100 text-orange-700',
+  medium: 'bg-blue-100 text-blue-700',
+  low: 'bg-green-100 text-green-700',
+}
+
+const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
+  const [title, setTitle] = useState(task.title)
+  const [description, setDescription] = useState(task.description || '')
+  const [priority, setPriority] = useState(task.priority || 'medium')
+  const [dueDate, setDueDate] = useState(
+    task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+  )
+  const [labels, setLabels] = useState((task.labels || []).join(', '))
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const updated = await updateTask(columnId, task._id, {
+        title,
+        description,
+        priority,
+        dueDate: dueDate || null,
+        labels: labels.split(',').map(l => l.trim()).filter(Boolean),
+      })
+      onUpdate(updated)
+      onClose()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+
+        {/* header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-medium text-gray-900">Task detail</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+        </div>
+
+        {/* body */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+
+          {/* title */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">Title</label>
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400"
+            />
+          </div>
+
+          {/* description */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">Description</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Add a description..."
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400 resize-none"
+            />
+          </div>
+
+          {/* priority + due date row */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Priority</label>
+              <select
+                value={priority}
+                onChange={e => setPriority(e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400"
+              >
+                {priorityOptions.map(p => (
+                  <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Due date</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400"
+              />
+            </div>
+          </div>
+
+          {/* labels */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">Labels <span className="font-normal text-gray-400">(comma separated)</span></label>
+            <input
+              value={labels}
+              onChange={e => setLabels(e.target.value)}
+              placeholder="frontend, bug, auth..."
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400"
+            />
+          </div>
+
+          {/* priority preview */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">Preview:</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${priorityStyles[priority]}`}>
+              {priority}
+            </span>
+            {labels && labels.split(',').map(l => l.trim()).filter(Boolean).map((label, i) => (
+              <span key={i} className="text-xs px-2 py-0.5 rounded-full border border-gray-200 text-gray-500">
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="text-sm px-4 py-2 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="text-sm px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default TaskModal
