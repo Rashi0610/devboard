@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { getColumns, getTasks, createColumn, createTask, updateTask } from '../api/board.api'
 import useAuthStore from '../store/auth.store'
+import useSocket from '../hooks/useSocket.js'
 import TaskModal from '../components/board/TaskModal.jsx'
 import {
   DndContext,
@@ -143,10 +144,40 @@ const Board = () => {
   const [showAddCol, setShowAddCol] = useState(false)
   const [activeTask, setActiveTask] = useState(null)
   const [selectedTask, setSelectedTask] = useState(null)
-const [selectedTaskColId, setSelectedTaskColId] = useState(null)
+  const [selectedTaskColId, setSelectedTaskColId] = useState(null)
+  const socket = useSocket(projectId)
 
   useEffect(() => { loadBoard() }, [projectId])
 
+  useEffect(() => {
+  socket.on('task:moved', ({ taskId, sourceColId, destColId, sourceTasks, destTasks }) => {
+    setTasks(prev => ({
+      ...prev,
+      [sourceColId]: sourceTasks,
+      [destColId]: destTasks
+    }))
+  })
+
+  socket.on('task:created', ({ columnId, task }) => {
+    setTasks(prev => ({
+      ...prev,
+      [columnId]: [...(prev[columnId] || []), task]
+    }))
+  })
+
+  socket.on('task:updated', ({ columnId, task }) => {
+    setTasks(prev => ({
+      ...prev,
+      [columnId]: prev[columnId].map(t => t._id === task._id ? task : t)
+    }))
+  })
+
+  return () => {
+    socket.off('task:moved')
+    socket.off('task:created')
+    socket.off('task:updated')
+  }
+}, [socket])
 
   const loadBoard = async () => {
     try {
@@ -223,6 +254,14 @@ const [selectedTaskColId, setSelectedTaskColId] = useState(null)
       await Promise.all(reordered.map((task, index) =>
         updateTask(sourceColId, task._id, { position: index })
       ))
+      socket.emit('task:moved', {
+    projectId,
+    taskId: active.id,
+    sourceColId,
+    destColId: sourceColId,
+    sourceTasks: reordered,
+    destTasks: reordered
+  })
     } else {
       const sourceTasks = [...(tasks[sourceColId] || [])]
       const destTasks = [...(tasks[destColId] || [])]
@@ -231,6 +270,15 @@ const [selectedTaskColId, setSelectedTaskColId] = useState(null)
       destTasks.push({ ...taskToMove, column: destColId })
       setTasks({ ...tasks, [sourceColId]: newSourceTasks, [destColId]: destTasks })
       await updateTask(destColId, taskToMove._id, { column: destColId, position: destTasks.length - 1 })
+
+      socket.emit('task:moved', {
+    projectId,
+    taskId: active.id,
+    sourceColId,
+    destColId,
+    sourceTasks: newSourceTasks,
+    destTasks
+  })
     }
   }
 
