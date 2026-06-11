@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { updateTask } from '../../api/board.api'
+import { triageTask } from '../../api/board.api'
 
 const priorityOptions = ['low', 'medium', 'high', 'urgent']
 
@@ -19,6 +20,8 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
   )
   const [labels, setLabels] = useState((task.labels || []).join(', '))
   const [saving, setSaving] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [storyPoints, setStoryPoints] = useState(task.storyPoints || 0)
 
   const handleSave = async () => {
     try {
@@ -29,6 +32,7 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
         priority,
         dueDate: dueDate || null,
         labels: labels.split(',').map(l => l.trim()).filter(Boolean),
+        storyPoints: Number(storyPoints)
       })
       onUpdate(updated)
       onClose()
@@ -38,6 +42,20 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
       setSaving(false)
     }
   }
+  const handleAISuggest = async () => {
+  if (!title.trim()) return
+  try {
+    setAiLoading(true)
+    const result = await triageTask(title, description)
+    setPriority(result.priority)
+    setLabels(result.labels.join(', '))
+    if (result.storyPoints) setStoryPoints(result.storyPoints)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setAiLoading(false)
+  }
+}
 
   return (
     <div
@@ -76,6 +94,20 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400 resize-none"
             />
           </div>
+          <button
+  onClick={handleAISuggest}
+  disabled={aiLoading || !title.trim()}
+  className="flex items-center gap-2 text-xs px-3 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 disabled:opacity-50 transition-colors"
+>
+  {aiLoading ? (
+    <>
+      <div className="animate-spin rounded-full h-3 w-3 border-b border-purple-700" />
+      Analyzing...
+    </>
+  ) : (
+    <>✨ AI Suggest</>
+  )}
+</button>
 
           {/* priority + due date row */}
           <div className="flex gap-3">

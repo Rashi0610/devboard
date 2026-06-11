@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams,useNavigate } from 'react-router-dom'
 import { getColumns, getTasks, createColumn, createTask, updateTask } from '../api/board.api'
 import useAuthStore from '../store/auth.store'
 import useSocket from '../hooks/useSocket.js'
@@ -148,6 +148,8 @@ const Board = () => {
   const socket = useSocket(projectId)
 
   useEffect(() => { loadBoard() }, [projectId])
+
+  const navigate = useNavigate();
 
   useEffect(() => {
   socket.on('task:moved', ({ taskId, sourceColId, destColId, sourceTasks, destTasks }) => {
@@ -309,6 +311,12 @@ const Board = () => {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
+        <button
+  onClick={() => navigate(`/analytics/${projectId}`)}
+  className="text-xs border border-gray-200 px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 mr-2"
+>
+  📊 Analytics
+</button>
           <div className="flex gap-4 p-6 overflow-x-auto flex-1 items-start">
             {columns.map(col => (
         <DroppableColumn

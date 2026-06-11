@@ -4,7 +4,7 @@ import ProtectedRoute from './components/layout/ProtectedRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Board from './pages/Board'
-
+import Analytics from './pages/Analytics'
 const AppRoutes = () => {
   useAuth()
 
@@ -18,6 +18,9 @@ const AppRoutes = () => {
         <ProtectedRoute><Board /></ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/analytics/:projectId" element={
+        <ProtectedRoute><Analytics /></ProtectedRoute>
+      } />
     </Routes>
   )
 }

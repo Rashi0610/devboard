@@ -24,3 +24,8 @@ export const updateTask = async (columnId, taskId, data) => {
   const res = await api.patch(`/columns/${columnId}/tasks/${taskId}`, data)
   return res.data.task
 }
+
+export const triageTask = async (title, description) => {
+  const res = await api.post('/ai/triage', { title, description })
+  return res.data
+}

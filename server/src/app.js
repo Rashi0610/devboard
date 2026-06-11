@@ -12,6 +12,8 @@ import workspaceRoutes from './routes/workspace.routes.js'
 import projectRoutes from './routes/project.routes.js'
 import columnRoutes from './routes/column.routes.js'
 import taskRoutes from './routes/task.routes.js'
+import aiRoutes from './routes/ai.routes.js'
+import analyticRoutes from './routes/analytics.routes.js'
 
 const app = express()
 
@@ -30,7 +32,9 @@ app.use('/api/auth', authRoutes)
 app.get('/api/health', (req, res) => res.json({ status: 'ok', project: 'Shipyard 🚢' }))
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/workspaces', projectRoutes);
-app.use('/api/projects', columnRoutes)
-app.use('/api/columns', taskRoutes)
+app.use('/api/projects', columnRoutes);
+app.use('/api/columns', taskRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/analytics',analyticRoutes);
 
 export default app
