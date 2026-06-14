@@ -7,7 +7,7 @@ import { initSocket } from './src/socket/index.js'
 const PORT = process.env.PORT || 5000
 const httpServer = createServer(app)
 
-initSocket(httpServer)
+await initSocket(httpServer)
 
 connectDB().then(() => {
   httpServer.listen(PORT, () => {

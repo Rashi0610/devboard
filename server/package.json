@@ -16,6 +16,7 @@
     "@aws-sdk/client-s3": "^3.1045.0",
     "@aws-sdk/s3-request-presigner": "^3.1045.0",
     "@bull-board/express": "^7.0.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.16.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.6",
@@ -35,6 +36,7 @@
     "openai": "^6.42.0",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
+    "redis": "^6.0.0",
     "socket.io": "^4.8.3",
     "socketio": "^1.0.0"
   },

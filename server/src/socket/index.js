@@ -1,10 +1,11 @@
 import { Server } from 'socket.io'
+import { createAdapter } from '@socket.io/redis-adapter'
+import { createClient } from 'redis'
 import jwt from 'jsonwebtoken'
-import 'dotenv/config'
 
 let io
 
-export const initSocket = (httpServer) => {
+export const initSocket = async (httpServer) => {
   io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL,
@@ -13,7 +14,15 @@ export const initSocket = (httpServer) => {
     }
   })
 
-  // auth middleware — verify JWT on every socket connection
+  // Redis adapter setup
+  const pubClient = createClient({ url: process.env.REDIS_URL })
+  const subClient = pubClient.duplicate()
+
+  await Promise.all([pubClient.connect(), subClient.connect()])
+  io.adapter(createAdapter(pubClient, subClient))
+  console.log('✅ Socket.io Redis adapter connected')
+
+  // auth middleware
   io.use((socket, next) => {
     try {
       const token = socket.handshake.auth.token ||
@@ -32,28 +41,23 @@ export const initSocket = (httpServer) => {
   io.on('connection', (socket) => {
     console.log(`🔌 Socket connected: ${socket.userId}`)
 
-    // join a project room
     socket.on('join:project', (projectId) => {
       socket.join(projectId)
       console.log(`User ${socket.userId} joined project ${projectId}`)
     })
 
-    // leave a project room
     socket.on('leave:project', (projectId) => {
       socket.leave(projectId)
     })
 
-    // task moved between columns
     socket.on('task:moved', (data) => {
       socket.to(data.projectId).emit('task:moved', data)
     })
 
-    // task created
     socket.on('task:created', (data) => {
       socket.to(data.projectId).emit('task:created', data)
     })
 
-    // task updated
     socket.on('task:updated', (data) => {
       socket.to(data.projectId).emit('task:updated', data)
     })
