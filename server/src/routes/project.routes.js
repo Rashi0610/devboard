@@ -8,14 +8,16 @@ const router = Router();
 router.post('/:workspaceId/projects',requireAuth,async(req,res)=>{
    try{
     const workspaceid = req.params.workspaceId;
-    const {name,description} = req.body;
+    const {name, description, status, startDate, endDate} = req.body;
 
     const newProject = await projectModel.create({
-        name:name,
-        description:description,
-        workspace:workspaceid,
-        createdBy:req.userId,
-
+        name: name,
+        description: description || '',
+        workspace: workspaceid,
+        createdBy: req.userId,
+        status: status || 'active',
+        startDate: startDate || null,
+        endDate: endDate || null
     });
     res.status(201).json({newProject})
    }

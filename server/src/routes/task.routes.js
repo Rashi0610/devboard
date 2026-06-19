@@ -25,7 +25,7 @@ router.post("/:columnId/tasks",requireAuth,async(req,res)=>{
 
     });
     
-    res.status(201).json({message:"Task created"});
+    res.status(201).json({task});
     }
 
     catch(err){

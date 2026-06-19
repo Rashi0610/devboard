@@ -13,12 +13,12 @@ const workSpaceModelSchema = new mongoose.Schema({
     },
     owner:{
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User' ,
+        ref: 'user' ,
         required:[true,"Who created it??"]
     },
     members: [
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     role: { type: String, enum: ['admin','member','viewer'], default: 'member' }
   }
 ],

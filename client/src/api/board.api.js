@@ -29,3 +29,11 @@ export const triageTask = async (title, description) => {
   const res = await api.post('/ai/triage', { title, description })
   return res.data
 }
+
+export const deleteColumn = async (projectId, columnId) => {
+  await api.delete(`/projects/${projectId}/columns/${columnId}`)
+}
+
+export const deleteTask = async (columnId, taskId) => {
+  await api.delete(`/columns/${columnId}/tasks/${taskId}`)
+}

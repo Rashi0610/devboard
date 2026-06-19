@@ -1,8 +1,19 @@
 import {Router} from 'express';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import ColumnModel from "../models/Column.model.js"
+import ProjectModel from "../models/Project.model.js"
 
 const router = Router();
+
+router.get('/:projectId/info', requireAuth, async (req, res) => {
+  try {
+    const project = await ProjectModel.findById(req.params.projectId)
+    if (!project) return res.status(404).json({ message: 'Project not found' })
+    res.json({ project })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' })
+  }
+})
 
 router.post('/:projectId/columns',requireAuth,async(req,res)=>{
     try{
@@ -45,5 +56,7 @@ router.delete("/:projectId/columns/:columnId",requireAuth,async(req,res)=>{
     }
 
 });
+
+
 
 export default router;

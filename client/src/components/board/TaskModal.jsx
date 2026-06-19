@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { updateTask } from '../../api/board.api'
+import { updateTask ,deleteTask} from '../../api/board.api'
 import { triageTask } from '../../api/board.api'
 
 const priorityOptions = ['low', 'medium', 'high', 'urgent']
@@ -11,7 +11,7 @@ const priorityStyles = {
   low: 'bg-green-100 text-green-700',
 }
 
-const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
+const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState(task.priority || 'medium')
@@ -22,6 +22,7 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
   const [saving, setSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [storyPoints, setStoryPoints] = useState(task.storyPoints || 0)
+  const [assignee, setAssignee] = useState(task.assignee || '')
 
   const handleSave = async () => {
     try {
@@ -32,6 +33,7 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
         priority,
         dueDate: dueDate || null,
         labels: labels.split(',').map(l => l.trim()).filter(Boolean),
+        assignee: assignee || null,
         storyPoints: Number(storyPoints)
       })
       onUpdate(updated)
@@ -42,6 +44,19 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
       setSaving(false)
     }
   }
+
+  const handleDelete = async () => {
+  if (!confirm('Delete this task?')) return
+  try {
+    await deleteTask(columnId, task._id)
+    onUpdate(null) // signal deletion to parent
+    onClose()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+
   const handleAISuggest = async () => {
   if (!title.trim()) return
   try {
@@ -133,6 +148,20 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
               />
             </div>
           </div>
+                {/*assignee */}
+          <div className="flex-1">
+  <label className="text-xs font-medium text-gray-500 mb-1 block">Assignee</label>
+  <select
+    value={assignee}
+    onChange={e => setAssignee(e.target.value)}
+    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400"
+  >
+    <option value="">Unassigned</option>
+    {members.map(m => (
+      <option key={m._id} value={m._id}>{m.name || m.github_id}</option>
+    ))}
+  </select>
+</div>
 
           {/* labels */}
           <div>
@@ -174,6 +203,10 @@ const TaskModal = ({ task, columnId, onClose, onUpdate }) => {
           >
             {saving ? 'Saving...' : 'Save changes'}
           </button>
+
+          <button onClick={handleDelete} className="text-sm text-red-500 hover:text-red-700 mr-auto">
+  Delete task
+</button>
         </div>
       </div>
     </div>

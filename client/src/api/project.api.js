@@ -5,7 +5,11 @@ export const getProjects = async (workspaceId) => {
   return res.data.projects
 }
 
-export const createProject = async (workspaceId, name, description) => {
-  const res = await api.post(`/workspaces/${workspaceId}/projects`, { name, description })
+export const createProject = async (workspaceId, projectData) => {
+  const res = await api.post(`/workspaces/${workspaceId}/projects`, projectData)
   return res.data.newProject
+}
+
+export const deleteProject = async (workspaceId, projectId) => {
+  await api.delete(`/workspaces/${workspaceId}/projects/${projectId}`)
 }

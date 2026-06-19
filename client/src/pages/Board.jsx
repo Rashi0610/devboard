@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams,useNavigate } from 'react-router-dom'
-import { getColumns, getTasks, createColumn, createTask, updateTask } from '../api/board.api'
+import { getColumns, getTasks, createColumn, createTask, updateTask, deleteColumn} from '../api/board.api'
 import useAuthStore from '../store/auth.store'
 import useSocket from '../hooks/useSocket.js'
 import TaskModal from '../components/board/TaskModal.jsx'
+import { getWorkspaceMembers } from '@/api/workspace.api' 
+import { getProjects } from '@/api/project.api'
+import api from '@/lib/axios'
 import {
   DndContext,
   closestCorners,
@@ -30,9 +33,9 @@ const priorityStyles = {
   low: 'bg-green-100 text-green-700',
 }
 
-const TaskCard = ({ task, onTaskClick }) => {
+const TaskCard = ({ task, onTaskClick , members }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task._id })
-
+  const assignedMember = members?.find(m => m._id === task.assignee)
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -61,20 +64,59 @@ const TaskCard = ({ task, onTaskClick }) => {
         {task.dueDate && (
           <span className="text-xs text-gray-400">{new Date(task.dueDate).toLocaleDateString()}</span>
         )}
+        {assignedMember && (
+  <img
+    src={assignedMember.avatar_url}
+    alt={assignedMember.name || assignedMember.github_id}
+    title={assignedMember.name || assignedMember.github_id}
+    className="w-5 h-5 rounded-full border border-gray-200"
+  />
+)}
       </div>
     </div>
   )
 }
 
-const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick }) => {
+const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick,members,onDeleteColumn}) => {
   const { setNodeRef, isOver } = useDroppable({ id: col._id })
   const [showAdd, setShowAdd] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
+  const [taskDescription, setTaskDescription] = useState('')
+  const [taskPriority, setTaskPriority] = useState('medium')
+  const [taskAssignee, setTaskAssignee] = useState('')
+  const [taskDueDate, setTaskDueDate] = useState('')
+  const [taskStoryPoints, setTaskStoryPoints] = useState(0)
+  const [taskLabels, setTaskLabels] = useState('')
 
   const handleAdd = async () => {
     if (!taskTitle.trim()) return
-    await onAddTask(col._id, taskTitle)
+    await onAddTask(col._id, {
+      title: taskTitle,
+      description: taskDescription,
+      priority: taskPriority,
+      assignee: taskAssignee || null,
+      dueDate: taskDueDate || null,
+      storyPoints: parseInt(taskStoryPoints) || 0,
+      labels: taskLabels ? taskLabels.split(',').map(l => l.trim()) : []
+    })
     setTaskTitle('')
+    setTaskDescription('')
+    setTaskPriority('medium')
+    setTaskAssignee('')
+    setTaskDueDate('')
+    setTaskStoryPoints(0)
+    setTaskLabels('')
+    setShowAdd(false)
+  }
+
+  const handleCancel = () => {
+    setTaskTitle('')
+    setTaskDescription('')
+    setTaskPriority('medium')
+    setTaskAssignee('')
+    setTaskDueDate('')
+    setTaskStoryPoints(0)
+    setTaskLabels('')
     setShowAdd(false)
   }
 
@@ -89,6 +131,7 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick }) => {
             {tasks?.length || 0}
           </span>
         </div>
+         <button onClick={() => onDeleteColumn(col._id)} className="text-xs text-gray-300 hover:text-red-500">delete</button>
       </div>
 
       {/* tasks */}
@@ -101,31 +144,77 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick }) => {
           className={`flex flex-col gap-2 p-2 flex-1 min-h-16 transition-colors ${isOver ? 'bg-blue-50' : ''}`}
         >
           {(tasks || []).map(task => (
-  <TaskCard key={task._id} task={task} onTaskClick={onTaskClick} />
+  <TaskCard key={task._id} task={task} onTaskClick={onTaskClick} members={members}/>
 ))}
         </div>
       </SortableContext>
 
-      {/* add task inline */}
+      {/* add task form */}
       {showAdd ? (
-        <div className="p-2 border-t border-gray-100">
+        <div className="p-3 border-t border-gray-100 bg-gray-50 max-h-96 overflow-y-auto">
           <input
             autoFocus
             value={taskTitle}
             onChange={e => setTaskTitle(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()}
             placeholder="Task title..."
-            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-gray-400"
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+          />
+          <textarea
+            value={taskDescription}
+            onChange={e => setTaskDescription(e.target.value)}
+            placeholder="Description..."
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all resize-none"
+            rows="2"
+          />
+          <select
+            value={taskPriority}
+            onChange={e => setTaskPriority(e.target.value)}
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+          <select
+            value={taskAssignee}
+            onChange={e => setTaskAssignee(e.target.value)}
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+          >
+            <option value="">Unassigned</option>
+            {(members || [])?.filter(m => m).map(m => (
+              <option key={m._id} value={m._id}>{m.name || m.github_id}</option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={taskDueDate}
+            onChange={e => setTaskDueDate(e.target.value)}
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+          />
+          <input
+            type="number"
+            value={taskStoryPoints}
+            onChange={e => setTaskStoryPoints(e.target.value)}
+            placeholder="Story points..."
+            min="0"
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+          />
+          <input
+            value={taskLabels}
+            onChange={e => setTaskLabels(e.target.value)}
+            placeholder="Labels (comma-separated)..."
+            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-3 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
           />
           <div className="flex gap-1">
-            <button onClick={handleAdd} className="flex-1 text-xs bg-gray-900 text-white rounded-lg py-1">Add</button>
-            <button onClick={() => setShowAdd(false)} className="flex-1 text-xs border border-gray-200 rounded-lg py-1 text-gray-500">Cancel</button>
+            <button onClick={handleAdd} className="flex-1 text-xs bg-indigo-600 text-white rounded-lg py-1.5 font-medium hover:bg-indigo-700 transition-colors">Add</button>
+            <button onClick={handleCancel} className="flex-1 text-xs border border-gray-300 rounded-lg py-1.5 text-gray-600 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
           </div>
         </div>
       ) : (
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1 px-3 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors w-full border-t border-gray-100"
+          className="flex items-center gap-1 px-3 py-2 text-xs text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors w-full border-t border-gray-100 font-medium"
         >
           + Add task
         </button>
@@ -146,8 +235,10 @@ const Board = () => {
   const [selectedTask, setSelectedTask] = useState(null)
   const [selectedTaskColId, setSelectedTaskColId] = useState(null)
   const socket = useSocket(projectId)
-
-  useEffect(() => { loadBoard() }, [projectId])
+  const [members,setMembers] = useState([])
+  useEffect(() => { loadBoard() 
+    loadMembers()
+  }, [projectId])
 
   const navigate = useNavigate();
 
@@ -197,7 +288,18 @@ const Board = () => {
       setLoading(false)
     }
   }
-
+  const loadMembers = async () => {
+  try {
+    // we need the project's workspace id — fetch single project info
+    const res = await api.get(`/projects/${projectId}/info`)
+    const workspaceId = res.data.project.workspace
+    const ws = await getWorkspaceMembers(workspaceId)
+    console.log('members',ws)
+    setMembers(ws)
+  } catch (err) {
+    console.log(err)
+  }
+}
   const handleAddColumn = async () => {
     if (!newColName.trim()) return
     try {
@@ -209,9 +311,9 @@ const Board = () => {
     } catch (err) { console.error(err) }
   }
 
-  const handleAddTask = async (columnId, title) => {
+  const handleAddTask = async (columnId, taskData) => {
     try {
-      await createTask(columnId, { title, projectId })
+      await createTask(columnId, { ...taskData, projectId })
       await loadBoard()
     } catch (err) { console.error(err) }
   }
@@ -228,6 +330,21 @@ const Board = () => {
       if (found) { setActiveTask(found); break }
     }
   }
+   const handleDeleteColumn = async (columnId) => {
+  if (!confirm('Delete this column and all its tasks?')) return
+  try {
+    await deleteColumn(projectId, columnId)
+    setColumns(columns.filter(c => c._id !== columnId))
+    setTasks(prev => {
+      const next = { ...prev }
+      delete next[columnId]
+      return next
+    })
+  } catch (err) {
+    console.error(err)
+  }
+}
+ 
 
   const handleDragEnd = async (event) => {
     const { active, over } = event
@@ -328,6 +445,8 @@ const Board = () => {
                 setSelectedTask(task)
                 setSelectedTaskColId(col._id)
             }}
+            members={members}
+            onDeleteColumn={handleDeleteColumn}
         />
             ))}
 
@@ -347,14 +466,14 @@ const Board = () => {
                     <button onClick={() => setShowAddCol(false)} className="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 text-gray-500">Cancel</button>
                   </div>
                 </div>
-              ) : (
-                <button
+              ) :(<button
                   onClick={() => setShowAddCol(true)}
                   className="w-full text-sm text-gray-400 hover:text-gray-600 border-2 border-dashed border-gray-200 hover:border-gray-300 rounded-xl py-3 transition-colors"
                 >
                   + Add column
-                </button>
-              )}
+                </button>)}
+             
+              
             </div>
           </div>
 
@@ -367,18 +486,30 @@ const Board = () => {
           </DragOverlay>
         </DndContext>
       </div>
-      {selectedTask && (
+      {selectedTask && selectedTaskColId && (
   <TaskModal
     task={selectedTask}
     columnId={selectedTaskColId}
+     members={members}
     onClose={() => { setSelectedTask(null); setSelectedTaskColId(null) }}
     onUpdate={(updated) => {
-      setTasks(prev => ({
-        ...prev,
-        [selectedTaskColId]: prev[selectedTaskColId].map(t =>
-          t._id === updated._id ? updated : t
-        )
-      }))
+      if (updated === null) {
+        // Task was deleted
+        setTasks(prev => ({
+          ...prev,
+          [selectedTaskColId]: (prev[selectedTaskColId] || []).filter(t => t._id !== selectedTask._id)
+        }))
+        setSelectedTask(null)
+        setSelectedTaskColId(null)
+      } else if (updated) {
+        // Task was updated
+        setTasks(prev => ({
+          ...prev,
+          [selectedTaskColId]: (prev[selectedTaskColId] || []).map(t =>
+            t._id === updated._id ? updated : t
+          )
+        }))
+      }
     }}
   />
 )}
