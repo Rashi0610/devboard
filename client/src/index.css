@@ -128,3 +128,70 @@
     @apply font-sans;
     }
 }
+
+/* Design tokens and utility classes for Shipyard dark theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #14181D;
+  --surface: #1B2026;
+  --surface-hover: #21262D;
+  --border-surface: #2A2F36;
+  --border-hover: #353B43;
+  --accent: #D97757;
+  --accent-hover: #C2684C;
+  --accent-text: #1B100B;
+  --text-primary: #E4E6EA;
+  --text-secondary: #8B92A0;
+  --text-tertiary: #5C6270;
+  --urgent: #3D1F1F;
+  --urgent-text: #E8A5A5;
+  --high: #3D2E1A;
+  --high-text: #E8C088;
+  --medium: #1A2A3D;
+  --medium-text: #8FB8E8;
+  --low: #1F3322;
+  --low-text: #94C9A0;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+}
+
+code, kbd, samp, pre, .mono { font-family: var(--font-mono); }
+
+.bg-app { background-color: var(--bg); }
+.bg-surface { background-color: var(--surface); }
+.bg-surface-hover { background-color: var(--surface-hover); }
+.border-surface { border-color: var(--border-surface); }
+.border-hover { border-color: var(--border-hover); }
+.text-primary { color: var(--text-primary); }
+.text-muted { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.btn-accent { background: var(--accent); color: var(--accent-text); }
+.btn-accent:hover { background: var(--accent-hover); }
+.accent { color: var(--accent); }
+.accent-bg { background: var(--accent); }
+.priority-urgent { background: var(--urgent); color: var(--urgent-text); }
+.priority-high { background: var(--high); color: var(--high-text); }
+.priority-medium { background: var(--medium); color: var(--medium-text); }
+.priority-low { background: var(--low); color: var(--low-text); }
+.surface-border { border: 1px solid var(--border-surface); }
+.card { background: var(--surface); border: 1px solid var(--border-surface); color: var(--text-primary); }
+.modal-backdrop { background: rgba(0,0,0,0.5); }
+.focus-ring { box-shadow: 0 0 0 4px rgba(217,119,87,0.18); }
+
+/* subtle modal animation */
+.modal-scale {
+  transform: scale(0.98);
+  opacity: 0;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+.modal-scale.show {
+  transform: scale(1);
+  opacity: 1;
+}

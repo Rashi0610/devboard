@@ -27,10 +27,10 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 
 const priorityStyles = {
-  urgent: 'bg-red-100 text-red-700',
-  high: 'bg-orange-100 text-orange-700',
-  medium: 'bg-blue-100 text-blue-700',
-  low: 'bg-green-100 text-green-700',
+  urgent: 'priority-urgent',
+  high: 'priority-high',
+  medium: 'priority-medium',
+  low: 'priority-low',
 }
 
 const TaskCard = ({ task, onTaskClick , members }) => {
@@ -46,11 +46,11 @@ const TaskCard = ({ task, onTaskClick , members }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white border border-gray-200 rounded-lg cursor-grab active:cursor-grabbing hover:border-gray-300 transition-colors"
+      className="card rounded-lg cursor-grab active:cursor-grabbing transition-colors"
     >
       {/* drag handle — dnd-kit listeners only here */}
       <div {...attributes} {...listeners} className="px-3 pt-3 pb-2">
-        <p className="text-xs font-medium text-gray-800 leading-snug">{task.title}</p>
+        <p className="text-xs font-medium text-primary leading-snug">{task.title}</p>
       </div>
 
       {/* click area — no drag listeners */}
@@ -62,14 +62,14 @@ const TaskCard = ({ task, onTaskClick , members }) => {
           {task.priority}
         </span>
         {task.dueDate && (
-          <span className="text-xs text-gray-400">{new Date(task.dueDate).toLocaleDateString()}</span>
+          <span className="text-xs text-muted">{new Date(task.dueDate).toLocaleDateString()}</span>
         )}
         {assignedMember && (
   <img
     src={assignedMember.avatar_url}
     alt={assignedMember.name || assignedMember.github_id}
     title={assignedMember.name || assignedMember.github_id}
-    className="w-5 h-5 rounded-full border border-gray-200"
+    className="w-5 h-5 rounded-full border surface-border"
   />
 )}
       </div>
@@ -121,17 +121,18 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick,members,onDeleteCol
   }
 
   return (
-    <div className="w-64 flex-shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col">
+    <div className="w-64 flex-shrink-0 bg-surface rounded-xl border surface-border flex flex-col">
+      <div style={{ height: 6, background: col.color, borderTopLeftRadius: 8, borderTopRightRadius: 8 }} />
       {/* header */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between px-3 py-3 border-b" style={{ borderColor: 'var(--border-surface)' }}>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
-          <span className="text-xs font-medium text-gray-700">{col.name}</span>
-          <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full">
+          <span className="text-xs font-medium text-primary">{col.name}</span>
+          <span className="text-xs px-1.5 py-0.5 bg-surface text-muted rounded-full">
             {tasks?.length || 0}
           </span>
         </div>
-         <button onClick={() => onDeleteColumn(col._id)} className="text-xs text-gray-300 hover:text-red-500">delete</button>
+         <button onClick={() => onDeleteColumn(col._id)} className="text-xs text-muted hover:text-red-500">delete</button>
       </div>
 
       {/* tasks */}
@@ -141,7 +142,7 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick,members,onDeleteCol
       >
         <div
           ref={setNodeRef}
-          className={`flex flex-col gap-2 p-2 flex-1 min-h-16 transition-colors ${isOver ? 'bg-blue-50' : ''}`}
+          className={`flex flex-col gap-2 p-2 flex-1 min-h-16 transition-colors ${isOver ? 'bg-surface/60' : ''}`}
         >
           {(tasks || []).map(task => (
   <TaskCard key={task._id} task={task} onTaskClick={onTaskClick} members={members}/>
@@ -151,13 +152,13 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick,members,onDeleteCol
 
       {/* add task form */}
       {showAdd ? (
-        <div className="p-3 border-t border-gray-100 bg-gray-50 max-h-96 overflow-y-auto">
+        <div className="p-3 border-t" style={{ borderColor: 'var(--border-surface)' }}>
           <input
             autoFocus
             value={taskTitle}
             onChange={e => setTaskTitle(e.target.value)}
             placeholder="Task title..."
-            className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-2 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+            className="w-full text-xs border surface-border rounded-lg px-2 py-1.5 mb-2 outline-none focus:ring focus-ring transition-all bg-surface"
           />
           <textarea
             value={taskDescription}
@@ -207,14 +208,14 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick,members,onDeleteCol
             className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 mb-3 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
           />
           <div className="flex gap-1">
-            <button onClick={handleAdd} className="flex-1 text-xs bg-indigo-600 text-white rounded-lg py-1.5 font-medium hover:bg-indigo-700 transition-colors">Add</button>
-            <button onClick={handleCancel} className="flex-1 text-xs border border-gray-300 rounded-lg py-1.5 text-gray-600 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
+            <button onClick={handleAdd} className="flex-1 text-xs btn-accent rounded-lg py-1.5 font-medium">Add</button>
+            <button onClick={handleCancel} className="flex-1 text-xs border surface-border rounded-lg py-1.5 text-muted hover:bg-surface/30 transition-colors font-medium">Cancel</button>
           </div>
         </div>
       ) : (
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1 px-3 py-2 text-xs text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors w-full border-t border-gray-100 font-medium"
+          className="flex items-center gap-1 px-3 py-2 text-xs text-muted hover:text-primary hover:bg-surface/40 transition-colors w-full border-t"
         >
           + Add task
         </button>
@@ -226,6 +227,7 @@ const DroppableColumn = ({ col, tasks, onAddTask,onTaskClick,members,onDeleteCol
 const Board = () => {
   const { projectId } = useParams()
   const { user } = useAuthStore()
+  const [project, setProject] = useState(null)
   const [columns, setColumns] = useState([])
   const [tasks, setTasks] = useState({})
   const [loading, setLoading] = useState(true)
@@ -293,8 +295,8 @@ const Board = () => {
     // we need the project's workspace id — fetch single project info
     const res = await api.get(`/projects/${projectId}/info`)
     const workspaceId = res.data.project.workspace
+    setProject(res.data.project)
     const ws = await getWorkspaceMembers(workspaceId)
-    console.log('members',ws)
     setMembers(ws)
   } catch (err) {
     console.log(err)
@@ -402,23 +404,30 @@ const Board = () => {
   }
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+    <div className="h-screen flex items-center justify-center bg-app text-primary">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent)' }} />
     </div>
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-app text-primary">
       <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🚢</span>
-            <h1 className="text-sm font-medium text-gray-900">Shipyard</h1>
-            <span className="text-gray-300">·</span>
-            <span className="text-sm text-gray-500">Board</span>
+        <div className="flex items-center justify-between px-6 py-3 bg-surface border-b surface-border">
+          <div className="flex items-center gap-4">
+            <span className="text-2xl accent">🚢</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-medium text-primary">{project?.name || 'Project'}</h1>
+                <div className="inline-flex rounded-full p-1 bg-transparent border border-transparent">
+                  <button className="px-3 py-1 text-xs rounded-full btn-accent" onClick={() => navigate(`/board/${projectId}`)}>Board</button>
+                  <button className="px-3 py-1 text-xs rounded-full ml-2 text-muted" onClick={() => navigate(`/analytics/${projectId}`)}>Analytics</button>
+                </div>
+              </div>
+              {project?.description && <div className="text-xs text-tertiary">{project.description}</div>}
+            </div>
           </div>
           {user?.avatar_url && (
-            <img src={user.avatar_url} className="w-7 h-7 rounded-full border border-gray-200" />
+            <img src={user.avatar_url} className="w-7 h-7 rounded-full border surface-border" />
           )}
         </div>
 
@@ -428,12 +437,7 @@ const Board = () => {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-        <button
-  onClick={() => navigate(`/analytics/${projectId}`)}
-  className="text-xs border border-gray-200 px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 mr-2"
->
-  📊 Analytics
-</button>
+        {/* removed old analytics button */}
           <div className="flex gap-4 p-6 overflow-x-auto flex-1 items-start">
             {columns.map(col => (
         <DroppableColumn
@@ -452,23 +456,23 @@ const Board = () => {
 
             <div className="w-64 flex-shrink-0">
               {showAddCol ? (
-                <div className="bg-white rounded-xl border border-gray-200 p-3">
+                <div className="card rounded-xl p-3">
                   <input
                     autoFocus
                     value={newColName}
                     onChange={e => setNewColName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddColumn()}
                     placeholder="Column name..."
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mb-2 outline-none focus:border-gray-400"
+                    className="w-full text-sm border surface-border rounded-lg px-3 py-2 mb-2 outline-none focus:ring bg-surface"
                   />
                   <div className="flex gap-2">
-                    <button onClick={handleAddColumn} className="flex-1 text-xs bg-gray-900 text-white rounded-lg py-1.5">Add</button>
-                    <button onClick={() => setShowAddCol(false)} className="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 text-gray-500">Cancel</button>
+                    <button onClick={handleAddColumn} className="flex-1 text-xs btn-accent rounded-lg py-1.5">Add</button>
+                    <button onClick={() => setShowAddCol(false)} className="flex-1 text-xs border surface-border rounded-lg py-1.5 text-muted">Cancel</button>
                   </div>
                 </div>
               ) :(<button
                   onClick={() => setShowAddCol(true)}
-                  className="w-full text-sm text-gray-400 hover:text-gray-600 border-2 border-dashed border-gray-200 hover:border-gray-300 rounded-xl py-3 transition-colors"
+                  className="w-full text-sm text-muted hover:text-primary border-2 border-dashed border-surface hover:border-hover rounded-xl py-3 transition-colors"
                 >
                   + Add column
                 </button>)}
@@ -479,8 +483,8 @@ const Board = () => {
 
           <DragOverlay>
             {activeTask && (
-              <div className="bg-white border border-blue-300 rounded-lg p-3 shadow-lg w-64">
-                <p className="text-xs font-medium text-gray-800">{activeTask.title}</p>
+              <div className="card rounded-lg p-3 shadow-lg w-64 border surface-border">
+                <p className="text-xs font-medium text-primary">{activeTask.title}</p>
               </div>
             )}
           </DragOverlay>
