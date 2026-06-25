@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { updateTask ,deleteTask} from '../../api/board.api'
-import { triageTask } from '../../api/board.api'
+import { updateTask, deleteTask, triageTask } from '../../api/board.api'
 
 const priorityOptions = ['low', 'medium', 'high', 'urgent']
 
@@ -11,7 +10,7 @@ const priorityStyles = {
   low: 'priority-low',
 }
 
-const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
+const TaskModal = ({ task, columnId, onClose, members, onUpdate }) => {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState(task.priority || 'medium')
@@ -46,31 +45,30 @@ const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
   }
 
   const handleDelete = async () => {
-  if (!confirm('Delete this task?')) return
-  try {
-    await deleteTask(columnId, task._id)
-    onUpdate(null) // signal deletion to parent
-    onClose()
-  } catch (err) {
-    console.error(err)
+    if (!confirm('Delete this task?')) return
+    try {
+      await deleteTask(columnId, task._id)
+      onUpdate(null)
+      onClose()
+    } catch (err) {
+      console.error(err)
+    }
   }
-}
-
 
   const handleAISuggest = async () => {
-  if (!title.trim()) return
-  try {
-    setAiLoading(true)
-    const result = await triageTask(title, description)
-    setPriority(result.priority)
-    setLabels(result.labels.join(', '))
-    if (result.storyPoints) setStoryPoints(result.storyPoints)
-  } catch (err) {
-    console.error(err)
-  } finally {
-    setAiLoading(false)
+    if (!title.trim()) return
+    try {
+      setAiLoading(true)
+      const result = await triageTask(title, description)
+      setPriority(result.priority)
+      setLabels(result.labels.join(', '))
+      if (result.storyPoints) setStoryPoints(result.storyPoints)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setAiLoading(false)
+    }
   }
-}
 
   return (
     <div
@@ -109,7 +107,9 @@ const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
               className="w-full text-sm border surface-border rounded-lg px-3 py-2 outline-none focus:ring resize-none bg-surface text-primary"
             />
           </div>
-                  <button
+
+          {/* AI suggest */}
+          <button
             onClick={handleAISuggest}
             disabled={aiLoading || !title.trim()}
             className="flex items-center gap-2 text-xs px-3 py-2 bg-[#111214] text-muted border surface-border rounded-lg hover:bg-[#151718] disabled:opacity-50 transition-colors"
@@ -124,7 +124,7 @@ const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
             )}
           </button>
 
-          {/* priority + due date row */}
+          {/* priority + due date */}
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="text-xs font-medium text-muted mb-1 block">Priority</label>
@@ -148,24 +148,39 @@ const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
               />
             </div>
           </div>
-                {/*assignee */}
+
+          {/* assignee */}
           <div className="flex-1">
-  <label className="text-xs font-medium text-muted mb-1 block">Assignee</label>
-  <select
-    value={assignee}
-    onChange={e => setAssignee(e.target.value)}
-    className="w-full text-sm border surface-border rounded-lg px-3 py-2 outline-none focus:ring bg-surface text-primary"
-  >
-    <option value="">Unassigned</option>
-    {(members || []).filter(m => m).map(m => (
-      <option key={m._id} value={m._id}>{m.name || m.github_id}</option>
-    ))}
-  </select>
-</div>
+            <label className="text-xs font-medium text-muted mb-1 block">Assignee</label>
+            <select
+              value={assignee}
+              onChange={e => setAssignee(e.target.value)}
+              className="w-full text-sm border surface-border rounded-lg px-3 py-2 outline-none focus:ring bg-surface text-primary"
+            >
+              <option value="">Unassigned</option>
+              {(members || []).filter(m => m).map(m => (
+                <option key={m._id} value={m._id}>{m.name || m.github_id}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* github PR link */}
+          {task.githubPrUrl && (
+            <a
+              href={task.githubPrUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[#8B92A0] hover:text-[#E4E6EA] flex items-center gap-1"
+            >
+              🔗 View PR on GitHub
+            </a>
+          )}
 
           {/* labels */}
           <div>
-            <label className="text-xs font-medium text-tertiary mb-1 block">Labels <span className="font-normal text-tertiary">(comma separated)</span></label>
+            <label className="text-xs font-medium text-tertiary mb-1 block">
+              Labels <span className="font-normal text-tertiary">(comma separated)</span>
+            </label>
             <input
               value={labels}
               onChange={e => setLabels(e.target.value)}
@@ -175,7 +190,7 @@ const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
           </div>
 
           {/* priority preview */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-tertiary">Preview:</span>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${priorityStyles[priority]}`}>
               {priority}
@@ -189,25 +204,30 @@ const TaskModal = ({ task, columnId, onClose,members, onUpdate }) => {
         </div>
 
         {/* footer */}
-        <div className="px-6 py-4 border-t border-surface flex justify-end gap-2">
+        <div className="px-6 py-4 border-t border-surface flex items-center gap-2">
           <button
-            onClick={onClose}
-            className="text-sm px-4 py-2 border surface-border rounded-lg text-tertiary hover:bg-surface-hover"
+            onClick={handleDelete}
+            className="text-sm text-red-500 hover:text-red-400"
           >
-            Cancel
+            Delete task
           </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="text-sm px-4 py-2 btn-accent rounded-lg disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save changes'}
-          </button>
-
-          <button onClick={handleDelete} className="text-sm text-red-500 hover:text-red-700 mr-auto">
-  Delete task
-</button>
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={onClose}
+              className="text-sm px-4 py-2 border surface-border rounded-lg text-tertiary hover:bg-surface-hover"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="text-sm px-4 py-2 btn-accent rounded-lg disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save changes'}
+            </button>
+          </div>
         </div>
+
       </div>
     </div>
   )

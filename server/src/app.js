@@ -14,13 +14,14 @@ import columnRoutes from './routes/column.routes.js'
 import taskRoutes from './routes/task.routes.js'
 import aiRoutes from './routes/ai.routes.js'
 import analyticRoutes from './routes/analytics.routes.js'
-
+import githubRoutes from './routes/github.routes.js'
 const app = express()
 
 // middleware first
 app.use(helmet())
 app.use(morgan('dev'))
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
+app.use('/api/github/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
 app.use(cookieParser())
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }))
@@ -36,5 +37,6 @@ app.use('/api/projects', columnRoutes);
 app.use('/api/columns', taskRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/analytics',analyticRoutes);
+app.use('/api/github',githubRoutes);
 
 export default app

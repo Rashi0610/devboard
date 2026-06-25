@@ -37,3 +37,8 @@ export const deleteColumn = async (projectId, columnId) => {
 export const deleteTask = async (columnId, taskId) => {
   await api.delete(`/columns/${columnId}/tasks/${taskId}`)
 }
+
+export const connectGithubRepo = async (projectId, repoOwner, repoName, defaultColumnId, doneColumnId) => {
+  const res = await api.post(`/github/connect`, { projectId, repoOwner, repoName, defaultColumnId, doneColumnId })
+  return res.data
+}

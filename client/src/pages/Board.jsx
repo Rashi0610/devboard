@@ -237,6 +237,10 @@ const Board = () => {
   const [selectedTask, setSelectedTask] = useState(null)
   const [selectedTaskColId, setSelectedTaskColId] = useState(null)
   const socket = useSocket(projectId)
+  const [showGithubConnect, setShowGithubConnect] = useState(false)
+  const [repoOwner, setRepoOwner] = useState('')
+  const [repoName, setRepoName] = useState('')
+  const [connecting, setConnecting] = useState(false)
   const [members,setMembers] = useState([])
   useEffect(() => { loadBoard() 
     loadMembers()
@@ -421,6 +425,9 @@ const Board = () => {
                 <div className="inline-flex rounded-full p-1 bg-transparent border border-transparent">
                   <button className="px-3 py-1 text-xs rounded-full btn-accent" onClick={() => navigate(`/board/${projectId}`)}>Board</button>
                   <button className="px-3 py-1 text-xs rounded-full ml-2 text-muted" onClick={() => navigate(`/analytics/${projectId}`)}>Analytics</button>
+                  <button className="text-xs border border-[#2A2F36] px-3 py-1.5 rounded-lg text-[#8B92A0] hover:text-[#E4E6EA] mr-2" onClick={() => setShowGithubConnect(!showGithubConnect)}>
+  🔗 GitHub
+</button>
                 </div>
               </div>
               {project?.description && <div className="text-xs text-tertiary">{project.description}</div>}
